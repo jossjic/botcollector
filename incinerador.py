@@ -20,7 +20,7 @@ class Agentes(Agent):
             self.model.grid.move_agent(self, next_position)
 
 
-class WallBlock(Agent):
+class Incinerador(Agent):
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
@@ -34,7 +34,7 @@ class WallBlock(Agent):
 #                model.grid.place_agent(block, (x, y))
 
 
-class Maze(Model):
+class Sala(Model):
     def __init__(self):
         super().__init__()
         self.schedule = RandomActivation(self)
@@ -58,11 +58,13 @@ class Maze(Model):
         self.grid.place_agent(robot4, robot4.pos)
         self.schedule.add(robot4)
         
-        incinerador = Agentes(self, (26, 26))  
+        robot5 = Agentes(self, (27, 27))  
+        self.grid.place_agent(robot5, robot5.pos)
+        self.schedule.add(robot5)
+        
+        incinerador = Incinerador(self, (26, 26))  
         self.grid.place_agent(incinerador, incinerador.pos)
         self.schedule.add(incinerador)
-
-
 
         #self.matrix = [
         #        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -163,15 +165,15 @@ def heuristic(position, goal):
 
 def agent_portrayal(agent):
     if type(agent) == Agentes:
-        return {"Shape": "ghost.png", "Layer": 0} # Si el agente es el fantasma
-    elif type(agent) == WallBlock:
-        return {"Shape": "rect", "w": 1, "h": 1, "Filled": "true", "Color": "Black", "Layer": 0} # Si el agente es parte del laberinto
+        return {"Shape": "robot.png", "Layer": 0} # Si el agente es el fantasma
+    elif type(agent) == Incinerador:
+        return {"Shape": "circle", "r": 0.8, "Filled": "true", "Color": "Brown", "Layer": 0}
     else:
         return None  # Retorna None para agentes que no tienen representación visual
 
 
 grid = CanvasGrid(agent_portrayal, 51, 51, 700, 700)
 
-server = ModularServer(Maze, [grid], "PacMan", {})
+server = ModularServer(Sala, [grid], "Robots Limpiadores", {})
 server.port = 8522
 server.launch()
