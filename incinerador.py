@@ -6,6 +6,7 @@ from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import Checkbox
 from mesa.visualization.UserParam import Slider
 
+
 import heapq # Librería para el método de búsquda del camino más corto A*
 
 class Agentes(Agent):
@@ -37,10 +38,17 @@ class Incinerador(Agent):
 
 
 class   Sala(Model):
-    def __init__(self, trash=0.45, grid_size=False):
+    def getGridSize(self):
+        return self.grid.width, self.grid.height
+    
+    def __init__(self, trash=0.45, grid_size=None):
         super().__init__()
+        
+        if grid_size:
+            self.grid = SingleGrid(81, 81, torus=False)
+        else:
+            self.grid = SingleGrid(51, 51, torus=False)
         self.schedule = RandomActivation(self)
-        self.grid = SingleGrid(51, 51, torus=False)
 
         #self.ghost_target_pos = (3, 1)  # Posición objetivo para el fantasma
 
@@ -155,8 +163,11 @@ def agent_portrayal(agent):
     else:
         return None  # Retorna None para agentes que no tienen representación visual
 
+(gridSizeX, gridSizeY)=Sala().getGridSize()
 
-grid = CanvasGrid(agent_portrayal, 51, 51, 700, 700)
+print("Grid size X: ", gridSizeX, ",y:", gridSizeY)
+
+grid = CanvasGrid(agent_portrayal, gridSizeX, gridSizeY, 700, 700)
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
     "trash": Slider("Trash Density", 0.45, 0.01, 1.0, 0.01),
     "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
