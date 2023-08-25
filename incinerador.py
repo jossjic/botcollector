@@ -37,7 +37,7 @@ class Incinerador(Agent):
 
 
 class   Sala(Model):
-    def __init__(self):
+    def __init__(self, trash=0.45, grid_size=False):
         super().__init__()
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(51, 51, torus=False)
