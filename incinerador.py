@@ -3,6 +3,8 @@ from mesa.space import SingleGrid
 from mesa.time import RandomActivation
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
+from mesa.visualization.UserParam import Checkbox
+from mesa.visualization.UserParam import Slider
 
 import heapq # Librería para el método de búsquda del camino más corto A*
 
@@ -35,7 +37,7 @@ class WallBlock(Agent):
 
 
 class Maze(Model):
-    def __init__(self):
+    def __init__(self, trash, grid_size):
         super().__init__()
         self.schedule = RandomActivation(self)
         self.grid = SingleGrid(51, 51, torus=False)
@@ -61,26 +63,6 @@ class Maze(Model):
         incinerador = Agentes(self, (26, 26))  
         self.grid.place_agent(incinerador, incinerador.pos)
         self.schedule.add(incinerador)
-
-
-
-        #self.matrix = [
-        #        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        #        [0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0],
-        #        [0,1,0,1,0,0,0,1,1,1,0,1,0,1,0,1,0],
-        #        [0,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,0],
-        #        [0,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,0],
-        #        [0,1,0,1,0,1,0,0,0,0,0,1,1,1,0,1,0],
-        #        [0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,0],
-        #        [0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0],
-        #        [0,1,0,1,1,1,0,0,1,0,0,1,0,1,1,1,0],
-        #        [0,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,0],
-        #        [0,1,1,1,0,1,0,0,0,0,0,1,0,1,1,1,0],
-        #        [0,1,0,1,0,1,0,1,1,1,0,0,0,1,0,1,0],
-        #        [0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0],
-        #        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-        #        ]
-        #place_wall_blocks(self, self.matrix)
        
     def step(self):
         self.schedule.step()
@@ -172,6 +154,9 @@ def agent_portrayal(agent):
 
 grid = CanvasGrid(agent_portrayal, 51, 51, 700, 700)
 
-server = ModularServer(Maze, [grid], "PacMan", {})
+server = ModularServer(Maze, [grid], "PacMan", {
+    "trash": Slider("Trash Density", 0.45, 0.01, 1.0, 0.01),
+    "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
+})
 server.port = 8522
 server.launch()
