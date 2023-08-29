@@ -165,9 +165,6 @@ def agent_portrayal(agent):
     else:
         return None  # Retorna None para agentes que no tienen representación visual
 
-(gridSizeX, gridSizeY)=Sala().getGridSize()
-
-print("Grid size X: ", gridSizeX, ",y:", gridSizeY)
 
 grid = CanvasGrid(agent_portrayal, 81, 81, 700, 700)
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
