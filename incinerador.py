@@ -41,7 +41,7 @@ class   Sala(Model):
     def getGridSize(self):
         return self.grid.width, self.grid.height
     
-    def __init__(self, trash=0.45, grid_size=None):
+    def __init__(self, trash=0.45, grid_size=False):
         super().__init__()
         
         if grid_size:
@@ -49,6 +49,8 @@ class   Sala(Model):
         else:
             self.grid = SingleGrid(51, 51, torus=False)
         self.schedule = RandomActivation(self)
+        
+        print(self.grid.width, self.grid.height)
 
         #self.ghost_target_pos = (3, 1)  # Posición objetivo para el fantasma
 
@@ -56,23 +58,23 @@ class   Sala(Model):
         self.grid.place_agent(robot1, robot1.pos)
         self.schedule.add(robot1)
         
-        robot2 = Agentes(self, (0, 50))  
+        robot2 = Agentes(self, (0, self.grid.height - 1))  
         self.grid.place_agent(robot2, robot2.pos)
         self.schedule.add(robot2)
 
-        robot3 = Agentes(self, (50, 0))  
+        robot3 = Agentes(self, (self.grid.width-1, 0))  
         self.grid.place_agent(robot3, robot3.pos)
         self.schedule.add(robot3)
 
-        robot4 = Agentes(self, (50, 50))  
+        robot4 = Agentes(self, (self.grid.width-1, self.grid.height-1))  
         self.grid.place_agent(robot4, robot4.pos)
         self.schedule.add(robot4)
         
-        robot5 = Agentes(self, (27, 27))  
+        robot5 = Agentes(self, ((self.grid.width-1)//2, (self.grid.height-1)//2))  
         self.grid.place_agent(robot5, robot5.pos)
         self.schedule.add(robot5)
         
-        incinerador = Incinerador(self, (26, 26))  
+        incinerador = Incinerador(self, ((self.grid.width-2)//2, (self.grid.height-2)//2))  
         self.grid.place_agent(incinerador, incinerador.pos)
         self.schedule.add(incinerador)
        
@@ -167,7 +169,7 @@ def agent_portrayal(agent):
 
 print("Grid size X: ", gridSizeX, ",y:", gridSizeY)
 
-grid = CanvasGrid(agent_portrayal, gridSizeX, gridSizeY, 700, 700)
+grid = CanvasGrid(agent_portrayal, 81, 81, 700, 700)
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
     "trash": Slider("Trash Density", 0.45, 0.01, 1.0, 0.01),
     "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
