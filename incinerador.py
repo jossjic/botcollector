@@ -1,32 +1,53 @@
 from mesa import Agent, Model
-from mesa.space import SingleGrid
+from mesa.space import MultiGrid
 from mesa.time import RandomActivation
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import Checkbox
 from mesa.visualization.UserParam import Slider
+from mesa.visualization.modules import ChartModule
+import numpy as np
 
 
 import heapq # Librería para el método de búsquda del camino más corto A*
 
 class Agentes(Agent):
+    WITH_THASH = 0
+    WITHOUT_TRASH = 1
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
 
     def step(self):
-        if not hasattr(self, 'path') or not self.path:
-            self.path = astar(self.model.matrix, self.pos, self.model.ghost_target_pos)
-
-        if self.path:
-            next_position = self.path.pop(0)
-            self.model.grid.move_agent(self, next_position)
+        # if not hasattr(self, 'path') or not self.path:
+        #     self.path = astar(self.model.matrix, self.pos, self.model.ghost_target_pos)
+        new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
+        while (self.model.grid.out_of_bounds(new_pos)) :
+                    new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
+        self.model.grid.move_agent(self, new_pos)  
+        
+        for element in self.model.grid.get_cell_list_contents([self.pos]):
+            if type(element) == Basura and element.condition == element.UNCOLLECT and self.WITHOUT_TRASH:
+                element.condition = element.COLLECT
+                self.condition = self.WITH_THASH
+        # if self.path:
+        #     next_position = self.path.pop(0)
+        #     self.model.grid.move_agent(self, next_position)
 
 
 class Incinerador(Agent):
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
+        
+class Basura(Agent):
+    COLLECT = 0
+    UNCOLLECT = 1
+    
+    def __init__(self, model):
+        super().__init__(model.next_id(), model)
+        self.condition = self.UNCOLLECT
+        
 
 
 #def place_wall_blocks(model, matrix):
@@ -41,42 +62,57 @@ class   Sala(Model):
     def getGridSize(self):
         return self.grid.width, self.grid.height
     
-    def __init__(self, trash=0.45, grid_size=False):
+    def __init__(self, density=0.45, grid_size=False):
         super().__init__()
         
         if grid_size:
-            self.grid = SingleGrid(81, 81, torus=False)
+            self.grid = MultiGrid(81, 81, torus=False)
         else:
-            self.grid = SingleGrid(51, 51, torus=False)
+            self.grid = MultiGrid(51, 51, torus=False)
         self.schedule = RandomActivation(self)
         
         print(self.grid.width, self.grid.height)
 
         #self.ghost_target_pos = (3, 1)  # Posición objetivo para el fantasma
+        for _,(x,y) in self.grid.coord_iter():
+            if (x,y) == (0,0):
+                robot1 = Agentes(self, (0, 0))
+                self.grid.place_agent(robot1, robot1.pos)
+                self.schedule.add(robot1)
+                
+            elif (x,y) == (0,self.grid.height - 1):
+                robot2 = Agentes(self, (0, self.grid.height - 1))  
+                self.grid.place_agent(robot2, robot2.pos)
+                self.schedule.add(robot2)
+                
 
-        robot1 = Agentes(self, (0, 0))
-        self.grid.place_agent(robot1, robot1.pos)
-        self.schedule.add(robot1)
-        
-        robot2 = Agentes(self, (0, self.grid.height - 1))  
-        self.grid.place_agent(robot2, robot2.pos)
-        self.schedule.add(robot2)
+            elif (x,y) == (self.grid.width-1,0):
+                robot3 = Agentes(self, (self.grid.width-1, 0))  
+                self.grid.place_agent(robot3, robot3.pos)
+                self.schedule.add(robot3)
+                
 
-        robot3 = Agentes(self, (self.grid.width-1, 0))  
-        self.grid.place_agent(robot3, robot3.pos)
-        self.schedule.add(robot3)
+            elif (x,y) == (self.grid.width-1, self.grid.height-1):
+                robot4 = Agentes(self, (self.grid.width-1, self.grid.height-1))  
+                self.grid.place_agent(robot4, robot4.pos)
+                self.schedule.add(robot4)
+                
+            
+            elif (x,y) == ((self.grid.width-1)//2, (self.grid.height-1)//2):    
+                robot5 = Agentes(self, ((self.grid.width-1)//2, (self.grid.height-1)//2))  
+                self.grid.place_agent(robot5, robot5.pos)
+                self.schedule.add(robot5)
+                
+            elif (x,y) == ((self.grid.width-2)//2, (self.grid.height-2)//2):     
+                incinerador = Incinerador(self, ((self.grid.width-2)//2, (self.grid.height-2)//2))  
+                self.grid.place_agent(incinerador, incinerador.pos)
+                self.schedule.add(incinerador)
+                
+            elif self.random.random() < density:
+                tree = Basura(self)
+                self.grid.place_agent(tree, (x,y))
+                self.schedule.add(tree)
 
-        robot4 = Agentes(self, (self.grid.width-1, self.grid.height-1))  
-        self.grid.place_agent(robot4, robot4.pos)
-        self.schedule.add(robot4)
-        
-        robot5 = Agentes(self, ((self.grid.width-1)//2, (self.grid.height-1)//2))  
-        self.grid.place_agent(robot5, robot5.pos)
-        self.schedule.add(robot5)
-        
-        incinerador = Incinerador(self, ((self.grid.width-2)//2, (self.grid.height-2)//2))  
-        self.grid.place_agent(incinerador, incinerador.pos)
-        self.schedule.add(incinerador)
        
     def step(self):
         self.schedule.step()
@@ -162,13 +198,20 @@ def agent_portrayal(agent):
         return {"Shape": "robot.png", "Layer": 0} # Si el agente es el fantasma
     elif type(agent) == Incinerador:
         return {"Shape": "circle", "r": 0.8, "Filled": "true", "Color": "Brown", "Layer": 0}
+    elif type(agent) == Basura and agent.condition == Basura.COLLECT:
+        return {"Shape": "circle", "Filled": "true", "Color": "Green", "r": 0.75, "Layer": 0}
+    elif type(agent) == Basura and agent.condition == Basura.UNCOLLECT:
+        return {"Shape": "circle", "Filled": "true", "Color": "Gray", "r": 0.75, "Layer": 0}
     else:
         return None  # Retorna None para agentes que no tienen representación visual
 
 
 grid = CanvasGrid(agent_portrayal, 81, 81, 700, 700)
+
+chart = ChartModule([{"Label": "Trash", "Color": "Black"}])
+
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
-    "trash": Slider("Trash Density", 0.45, 0.01, 1.0, 0.01),
+    "density": Slider("Trash density", 0.45, 0.01, 1.0, 0.01),
     "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
 })
 server.port = 8522
