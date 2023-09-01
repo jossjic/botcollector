@@ -22,6 +22,7 @@ class Agentes(Agent):
             new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
             while (self.model.grid.out_of_bounds(new_pos)) :
                         new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
+            Incinerador.ON = False
             self.model.grid.move_agent(self, new_pos)
         else:
             new_pos = self.pos
@@ -52,6 +53,7 @@ class Agentes(Agent):
                 
             else:
                self.w_trash=False
+               Incinerador.ON = True
                
             self.model.grid.move_agent(self, new_pos)
 
@@ -65,6 +67,7 @@ class Incinerador(Agent):
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
+        self.ON = False
         
 class Basura(Agent):
     
@@ -132,6 +135,7 @@ class   Sala(Model):
     def step(self):
         if self.schedule.time < self.max_steps:
             self.schedule.step()
+            print(Incinerador.ON)
 
 def agent_portrayal(agent):
     if type(agent) == Agentes:
