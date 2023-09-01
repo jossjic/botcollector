@@ -62,12 +62,16 @@ class Agentes(Agent):
                 self.model.grid.remove_agent(element)
                 self.model.schedule.remove(element)
                 self.w_trash=True
+            elif type(element) == Incinerador and element.condition==element.OFF:
+                element.condition=element.ON
 
 class Incinerador(Agent):
+    ON=1
+    OFF=2
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
-        self.ON = False
+        self.condition= self.OFF
         
 class Basura(Agent):
     
@@ -140,8 +144,10 @@ class   Sala(Model):
 def agent_portrayal(agent):
     if type(agent) == Agentes:
         return {"Shape": "robot.png", "Layer": 0} # Si el agente es el fantasma
-    elif type(agent) == Incinerador:
-        return {"Shape": "circle", "r": 0.8, "Filled": "true", "Color": "Brown", "Layer": 0}
+    elif type(agent) == Incinerador and agent.condition == Incinerador.OFF:
+        return {"Shape": "circle", "Filled": "true", "Color": "Green", "r": 0.75, "Layer": 0}
+    elif type(agent) == Incinerador and agent.condition == Incinerador.ON:
+        return {"Shape": "circle", "Filled": "true", "Color": "Purple", "r": 0.75, "Layer": 0}
     elif type(agent) == Basura:
         return {"Shape": "circle", "Filled": "true", "Color": "Gray", "r": 0.75, "Layer": 0}
     else:
