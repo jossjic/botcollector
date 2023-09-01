@@ -80,9 +80,9 @@ class   Sala(Model):
         super().__init__()
         
         if grid_size:
-            self.grid = MultiGrid(81, 81, torus=False)
-        else:
             self.grid = MultiGrid(51, 51, torus=False)
+        else:
+            self.grid = MultiGrid(21, 21, torus=False)
         self.schedule = RandomActivation(self)
         self.max_steps = max_steps
         
@@ -144,14 +144,15 @@ def agent_portrayal(agent):
         return None  # Retorna None para agentes que no tienen representación visual
 
 
-grid = CanvasGrid(agent_portrayal, 81, 81, 700, 700)
+grid = CanvasGrid(agent_portrayal, 51, 51, 700, 700)
 
 chart = ChartModule([{"Label": "Trash", "Color": "Black"}])
 
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
     "density": Slider("Trash density", 0.50, 0.01, 1.0, 0.01),
     "max_steps": Slider("Max Step", 1000, 1, 1000, 1),
-    "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
+    "grid_size": Checkbox("Grid size (Off=21 On=51)", False),
 })
 server.port = 8522
 server.launch()
+
