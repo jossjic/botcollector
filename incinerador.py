@@ -50,27 +50,16 @@ class Agentes(Agent):
                     elif self.pos[0] > ((self.model.grid.width-2)//2):
                         new_pos = self.pos + np.array([-1,0])
                 
-            
             else:
                self.w_trash=False
                
             self.model.grid.move_agent(self, new_pos)
-            
-            
-            
-            
-                    
-                
-        
+
         for element in self.model.grid.get_cell_list_contents([self.pos]):
             if type(element) == Basura and self.w_trash==False:
                 self.model.grid.remove_agent(element)
                 self.model.schedule.remove(element)
                 self.w_trash=True
-        # if self.path:
-        #     next_position = self.path.pop(0)
-        #     self.model.grid.move_agent(self, next_position)
-
 
 class Incinerador(Agent):
     def __init__(self, model, pos):
@@ -83,20 +72,11 @@ class Basura(Agent):
         super().__init__(model.next_id(), model)
         
 
-
-#def place_wall_blocks(model, matrix):
-#    for x in range(model.grid.width):
-#        for y in range(model.grid.height):
-#            if matrix[y][x] == 0:
-#                block = WallBlock(model, (x, y))
-#                model.grid.place_agent(block, (x, y))
-
-
 class   Sala(Model):
     def getGridSize(self):
         return self.grid.width, self.grid.height
     
-    def __init__(self, density=0.45, grid_size=False):
+    def __init__(self, density=0.45, grid_size=False, max_steps=1000):
         super().__init__()
         
         if grid_size:
@@ -104,6 +84,7 @@ class   Sala(Model):
         else:
             self.grid = MultiGrid(51, 51, torus=False)
         self.schedule = RandomActivation(self)
+        self.max_steps = max_steps
         
         print(self.grid.width, self.grid.height)
 
@@ -149,83 +130,8 @@ class   Sala(Model):
 
        
     def step(self):
-        self.schedule.step()
-
-
-##### Búsqueda del camino más corto #####
-class Node: # Clase nodo
-    def __init__(self, position, parent=None):
-        self.position = position
-        self.parent = parent
-        self.g = 0
-        self.h = 0
-        self.f = 0
-
-    def __lt__(self, other):
-        return self.f < other.f
-
-def astar(grid, start, end): # A*
-    open_list = []
-    closed_set = set()
-
-    start_node = Node(start)
-    end_node = Node(end)
-    
-    heapq.heappush(open_list, start_node)
-
-    while open_list:
-        current_node = heapq.heappop(open_list)
-
-        if current_node.position == end_node.position:
-            path = []
-            while current_node:
-                path.append(current_node.position)
-                current_node = current_node.parent
-            return path[::-1]
-        
-        closed_set.add(current_node.position)
-
-        for neighbor in get_neighbors(current_node.position, grid):
-            if neighbor in closed_set:
-                continue
-            
-            g_score = current_node.g + 1
-            h_score = heuristic(neighbor, end_node.position)
-            f_score = g_score + h_score
-
-            if any(neighbor == node.position for node in open_list):
-                existing_node = next(node for node in open_list if node.position == neighbor)
-                if g_score < existing_node.g:
-                    existing_node.g = g_score
-                    existing_node.f = f_score
-                    existing_node.parent = current_node
-            else:
-                neighbor_node = Node(neighbor, current_node)
-                neighbor_node.g = g_score
-                neighbor_node.h = h_score
-                neighbor_node.f = f_score
-                heapq.heappush(open_list, neighbor_node)
-
-    return None
-
-def get_neighbors(position, grid): #Obtiene los vecinos
-    neighbors = []
-    col, row = position  # Swap columna y fila
-    rows, cols = len(grid), len(grid[0])
-
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-    for dc, dr in directions:  # Swap dc y dr 
-        new_col, new_row = col + dc, row + dr  # Swap new_col and new_row 
-        if 0 <= new_row < rows and 0 <= new_col < cols and grid[new_row][new_col] == 1:
-            neighbors.append((new_col, new_row))  # Swap new_col and new_row 
-    
-    return neighbors
-
-def heuristic(position, goal):
-    return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
-##################
-
+        if self.schedule.time < self.max_steps:
+            self.schedule.step()
 
 def agent_portrayal(agent):
     if type(agent) == Agentes:
@@ -243,7 +149,8 @@ grid = CanvasGrid(agent_portrayal, 81, 81, 700, 700)
 chart = ChartModule([{"Label": "Trash", "Color": "Black"}])
 
 server = ModularServer(Sala, [grid], "Robots Limpiadores", {
-    "density": Slider("Trash density", 0.45, 0.01, 1.0, 0.01),
+    "density": Slider("Trash density", 0.50, 0.01, 1.0, 0.01),
+    "max_steps": Slider("Max Step", 1000, 1, 1000, 1),
     "grid_size": Checkbox("Grid size (Off=51 On=81)", False),
 })
 server.port = 8522
