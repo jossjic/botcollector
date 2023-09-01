@@ -72,6 +72,17 @@ class Incinerador(Agent):
         super().__init__(model.next_id(), model)
         self.pos = pos
         self.condition= self.OFF
+        self.timer = 0
+        
+    def step(self):
+        # Check if the condition is ON and update the timer
+        if self.condition == self.ON:
+            self.timer += 1
+
+            # Check if enough time has passed (e.g., 5 steps) and switch back to OFF
+            if self.timer >= 5:
+                self.condition = self.OFF
+                self.timer = 0  # Reset the timer
         
 class Basura(Agent):
     
