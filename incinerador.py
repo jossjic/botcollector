@@ -12,24 +12,61 @@ import numpy as np
 import heapq # Librería para el método de búsquda del camino más corto A*
 
 class Agentes(Agent):
-    WITH_THASH = 0
-    WITHOUT_TRASH = 1
+    w_trash=False
     def __init__(self, model, pos):
         super().__init__(model.next_id(), model)
         self.pos = pos
 
     def step(self):
-        # if not hasattr(self, 'path') or not self.path:
-        #     self.path = astar(self.model.matrix, self.pos, self.model.ghost_target_pos)
-        new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
-        while (self.model.grid.out_of_bounds(new_pos)) :
-                    new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
-        self.model.grid.move_agent(self, new_pos)  
+        if self.w_trash==False:
+            new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
+            while (self.model.grid.out_of_bounds(new_pos)) :
+                        new_pos = self.pos + np.array([self.random.randrange(-1, 2, 1),self.random.randrange(-1,2,1)])
+            self.model.grid.move_agent(self, new_pos)
+        else:
+            new_pos = self.pos
+            if (self.pos[0] != ((self.model.grid.width-2)//2)) or (self.pos[1] != ((self.model.grid.height-2)//2)):
+                  # Inicializar new_pos con la posición actual
+                
+                if self.pos[0] < ((self.model.grid.width - 2) // 2):
+                    new_pos = new_pos + np.array([1, 0])
+                elif self.pos[0] > ((self.model.grid.width - 2) // 2):
+                    new_pos = new_pos + np.array([-1, 0])
+                
+                if self.pos[1] < ((self.model.grid.height - 2) // 2):
+                    new_pos = new_pos + np.array([0, 1])
+                elif self.pos[1] > ((self.model.grid.height - 2) // 2):
+                    new_pos = new_pos + np.array([0, -1])
+                        
+                elif self.pos[0] == ((self.model.grid.width-2)//2):
+                    if self.pos[1] < ((self.model.grid.height-2)//2):
+                        new_pos = self.pos + np.array([0,1])
+                    elif self.pos[1] > ((self.model.grid.height-2)//2):
+                        new_pos = self.pos + np.array([0,-1])
+                
+                elif self.pos[1] == ((self.model.grid.height-2)//2):
+                    if self.pos[0] < ((self.model.grid.width-2)//2):
+                        new_pos = self.pos + np.array([1,0])
+                    elif self.pos[0] > ((self.model.grid.width-2)//2):
+                        new_pos = self.pos + np.array([-1,0])
+                
+            
+            else:
+               self.w_trash=False
+               
+            self.model.grid.move_agent(self, new_pos)
+            
+            
+            
+            
+                    
+                
         
         for element in self.model.grid.get_cell_list_contents([self.pos]):
-            if type(element) == Basura and element.condition == element.UNCOLLECT and self.WITHOUT_TRASH:
-                element.condition = element.COLLECT
-                self.condition = self.WITH_THASH
+            if type(element) == Basura and self.w_trash==False:
+                self.model.grid.remove_agent(element)
+                self.model.schedule.remove(element)
+                self.w_trash=True
         # if self.path:
         #     next_position = self.path.pop(0)
         #     self.model.grid.move_agent(self, next_position)
@@ -41,12 +78,9 @@ class Incinerador(Agent):
         self.pos = pos
         
 class Basura(Agent):
-    COLLECT = 0
-    UNCOLLECT = 1
     
     def __init__(self, model):
         super().__init__(model.next_id(), model)
-        self.condition = self.UNCOLLECT
         
 
 
@@ -109,9 +143,9 @@ class   Sala(Model):
                 self.schedule.add(incinerador)
                 
             elif self.random.random() < density:
-                tree = Basura(self)
-                self.grid.place_agent(tree, (x,y))
-                self.schedule.add(tree)
+                basura = Basura(self)
+                self.grid.place_agent(basura, (x,y))
+                self.schedule.add(basura)
 
        
     def step(self):
@@ -198,9 +232,7 @@ def agent_portrayal(agent):
         return {"Shape": "robot.png", "Layer": 0} # Si el agente es el fantasma
     elif type(agent) == Incinerador:
         return {"Shape": "circle", "r": 0.8, "Filled": "true", "Color": "Brown", "Layer": 0}
-    elif type(agent) == Basura and agent.condition == Basura.COLLECT:
-        return {"Shape": "circle", "Filled": "true", "Color": "Green", "r": 0.75, "Layer": 0}
-    elif type(agent) == Basura and agent.condition == Basura.UNCOLLECT:
+    elif type(agent) == Basura:
         return {"Shape": "circle", "Filled": "true", "Color": "Gray", "r": 0.75, "Layer": 0}
     else:
         return None  # Retorna None para agentes que no tienen representación visual
